@@ -1,11 +1,14 @@
-// server/models/Book.js
 import mongoose from 'mongoose';
 
 const bookSchema = new mongoose.Schema({
-  title: { type: String, required: true },           // 전자책 제목
-  slug: { type: String, required: true, unique: true }, // 고유 식별자 (frontend01 등)
-  description: String,                                // 설명
-  fileName: { type: String, required: true }          // 실제 파일명 (PDF, ZIP 등)
-});
+  title: { type: String, required: true },
+  slug: { type: String, required: true, unique: true },
+  description: { type: String, required: true },
+  fileName: { type: String, required: true },
+  category: { type: String, required: true },
+  titleIndex: { type: Number, required: true },
+  price: Number,
+}, { timestamps: true });
 
-export default mongoose.model('Book', bookSchema);
+const Book = mongoose.model('Book', bookSchema);
+export default Book;
