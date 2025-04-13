@@ -17,15 +17,19 @@ import Book from './models/Book.js';
 dotenv.config();
 const app = express();
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const allowedOrigins = process.env.NODE_ENV === 'production'
+  ? ['https://careerbooks.shop', 'http://careerbooks.shop']
+  : ['http://localhost:5173'];
 
 // ✅ CORS 설정 (배포 도메인 허용)
 app.use(cors({
-  origin: ['http://careerbooks.shop', 'https://careerbooks.shop'],
+  origin: allowedOrigins,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 app.use(express.json());
 app.use(fileUpload());
