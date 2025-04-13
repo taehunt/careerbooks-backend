@@ -12,7 +12,18 @@ const router = express.Router();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// 파일 다운로드 라우트
+// ✅ 무료 전자책은 인증 없이 다운로드 허용
+router.get('/frontend00', async (req, res) => {
+  try {
+    const filePath = path.join(__dirname, '..', 'uploads', 'frontend00.zip');
+    res.download(filePath, 'frontend00.zip');
+  } catch (err) {
+    console.error('무료 전자책 다운로드 오류:', err);
+    res.status(500).send('무료 전자책 다운로드 실패');
+  }
+});
+
+// ✅ 유료 전자책은 인증 및 구매 내역 확인
 router.get('/:slug', verifyToken, async (req, res) => {
   const { slug } = req.params;
 
