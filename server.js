@@ -22,7 +22,11 @@ const app = express();
 // ✅ CORS 설정
 const allowedOrigins =
   process.env.NODE_ENV === "production"
-    ? ["https://careerbooks.shop", "http://careerbooks.shop"]
+    ? [
+        "https://careerbooks.shop", // 프론트 도메인
+        "http://careerbooks.shop",
+        "https://api.careerbooks.shop", // 백엔드 도메인도 origin 허용
+      ]
     : ["http://localhost:5173"];
 
 app.use(
