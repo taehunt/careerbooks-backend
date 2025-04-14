@@ -64,8 +64,9 @@ mongoose
     // 📚 책 데이터가 없을 때만 초기화
     const bookCount = await Book.countDocuments();
     if (bookCount === 0) {
-		await Book.insertMany(books);
 		/*
+		await Book.insertMany(books);
+		
 		// ✅ 추후 전자책 추가 시
 		const books = [
 		{
