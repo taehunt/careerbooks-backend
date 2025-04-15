@@ -38,15 +38,8 @@ const allowedOrigins =
 
 app.use(
   cors({
-    origin: allowedOrigins,
     origin: function (origin, callback) {
-      const whitelist = [
-        "http://localhost:5173",
-        "https://careerbooks.shop",
-        "http://careerbooks.shop",
-        "https://api.careerbooks.shop",
-      ];
-      if (!origin || whitelist.includes(origin)) {
+      if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
         callback(new Error("Not allowed by CORS"));
