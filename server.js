@@ -39,6 +39,19 @@ const allowedOrigins =
 app.use(
   cors({
     origin: allowedOrigins,
+    origin: function (origin, callback) {
+      const whitelist = [
+        "http://localhost:5173",
+        "https://careerbooks.shop",
+        "http://careerbooks.shop",
+        "https://api.careerbooks.shop",
+      ];
+      if (!origin || whitelist.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   })
@@ -60,7 +73,6 @@ app.use(
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-
 
 app.use(express.json());
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
