@@ -2,13 +2,14 @@ import mongoose from "mongoose";
 
 const bookSchema = new mongoose.Schema(
   {
-    title: { type: String, required: true },
-    slug: { type: String, required: true, unique: true },
-    description: { type: String, required: true },
-    fileName: { type: String, required: true },
-    category: { type: String, required: true },
-    titleIndex: { type: Number, required: true },
+    title: String,
+    slug: { type: String, unique: true },
+    description: String,
+    fileName: String,
+    category: String,
+    titleIndex: Number,
     price: Number,
+    originalPrice: Number,
   },
   { timestamps: true }
 );

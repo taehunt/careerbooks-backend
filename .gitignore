@@ -2,7 +2,8 @@
 node_modules/
 
 # 환경 변수
-.env
+.env.development
+.env.production
 
 # 업로드 파일
 uploads/
