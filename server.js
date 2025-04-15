@@ -32,6 +32,8 @@ const allowedOrigins =
     ? [
         "https://careerbooks.shop",
         "http://careerbooks.shop",
+        "https://www.careerbooks.shop",
+        "http://www.careerbooks.shop",
         "https://api.careerbooks.shop",
       ]
     : ["http://localhost:5173"];
