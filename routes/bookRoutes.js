@@ -5,7 +5,7 @@ import User from "../models/User.js";
 
 const router = express.Router();
 
-// ✅ 1. /api/books → 전체 or category별 전자책 목록 (쿼리 방식)
+// ✅ /api/books → 전체 or category별 전자책 목록 (쿼리 방식)
 router.get("/", async (req, res) => {
   const { category } = req.query;
   try {
@@ -17,7 +17,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-// ✅ 2. /api/books/category/:category → 경로 방식 지원 추가 (슬러그 충돌 방지용)
+// ✅ /api/books/category/:category → 경로 방식 지원 추가 (슬러그 충돌 방지용)
 router.get("/category/:category", async (req, res) => {
   const { category } = req.params;
   try {
@@ -28,7 +28,7 @@ router.get("/category/:category", async (req, res) => {
   }
 });
 
-// ✅ 3. 내가 구매한 책 목록
+// ✅ 내가 구매한 책 목록
 router.get("/my-books", verifyToken, async (req, res) => {
   const user = await User.findById(req.user.id);
   if (!user) return res.status(401).json({ message: "사용자 없음" });
@@ -52,7 +52,7 @@ router.get("/my-books", verifyToken, async (req, res) => {
   res.json(purchasedBooks.filter((b) => b !== null));
 });
 
-// ✅ 4. 구매 여부 확인
+// ✅ 구매 여부 확인
 router.get("/:slug/access", verifyToken, async (req, res) => {
   const { slug } = req.params;
   const user = await User.findById(req.user.id);
@@ -65,7 +65,7 @@ router.get("/:slug/access", verifyToken, async (req, res) => {
   return res.json({ allowed: hasBook });
 });
 
-// ✅ 5. 책 구매 API
+// ✅ 책 구매 API
 router.post("/:slug/purchase", verifyToken, async (req, res) => {
   const { slug } = req.params;
   const user = await User.findById(req.user.id);
@@ -82,15 +82,28 @@ router.post("/:slug/purchase", verifyToken, async (req, res) => {
   user.purchasedBooks.push({ slug, purchasedAt: new Date() });
   await user.save();
 
+  // ✅ Book의 salesCount 증가
+  await Book.findOneAndUpdate({ slug }, { $inc: { salesCount: 1 } });
+
   res.json({ message: "구매 완료" });
 });
 
-// ✅ 6. 책 상세 조회 (마지막에 위치시켜야 슬러그 충돌 방지)
+// ✅ 책 상세 조회 (마지막에 위치시켜야 슬러그 충돌 방지)
 router.get("/:slug", async (req, res) => {
   const { slug } = req.params;
   const book = await Book.findOne({ slug });
   if (!book) return res.status(404).json({ message: "책을 찾을 수 없습니다." });
   res.json(book);
+});
+
+// ✅ 판매횟수 기준 인기 전자책
+router.get("/popular", async (req, res) => {
+  try {
+    const books = await Book.find().sort({ salesCount: -1 }).limit(3);
+    res.json(books);
+  } catch (err) {
+    res.status(500).json({ message: "서버 오류" });
+  }
 });
 
 export default router;

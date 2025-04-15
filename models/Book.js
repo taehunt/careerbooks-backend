@@ -10,6 +10,12 @@ const bookSchema = new mongoose.Schema(
     titleIndex: Number,
     price: Number,
     originalPrice: Number,
+
+    // ✅ 판매 횟수 추가
+    salesCount: {
+      type: Number,
+      default: 0,
+    },
   },
   { timestamps: true }
 );
