@@ -88,15 +88,7 @@ router.post("/:slug/purchase", verifyToken, async (req, res) => {
   res.json({ message: "구매 완료" });
 });
 
-// ✅ 책 상세 조회 (마지막에 위치시켜야 슬러그 충돌 방지)
-router.get("/:slug", async (req, res) => {
-  const { slug } = req.params;
-  const book = await Book.findOne({ slug });
-  if (!book) return res.status(404).json({ message: "책을 찾을 수 없습니다." });
-  res.json(book);
-});
-
-// ✅ 판매횟수 기준 인기 전자책
+// ✅ /popular 라우트를 slug보다 위로 이동해야 함
 router.get("/popular", async (req, res) => {
   try {
     const books = await Book.find().sort({ salesCount: -1 }).limit(3);
@@ -104,6 +96,14 @@ router.get("/popular", async (req, res) => {
   } catch (err) {
     res.status(500).json({ message: "서버 오류" });
   }
+});
+
+// ✅ 슬러그로 책 상세 조회는 항상 맨 마지막에!
+router.get("/:slug", async (req, res) => {
+  const { slug } = req.params;
+  const book = await Book.findOne({ slug });
+  if (!book) return res.status(404).json({ message: "책을 찾을 수 없습니다." });
+  res.json(book);
 });
 
 export default router;
