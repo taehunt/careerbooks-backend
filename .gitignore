@@ -5,9 +5,6 @@ node_modules/
 .env.development
 .env.production
 
-# 업로드 파일
-uploads/
-
 # 로그
 *.log
 
