@@ -52,114 +52,123 @@ router.get("/users", async (req, res) => {
 
 // ✅ 전자책 등록
 router.post("/books", upload.single("file"), async (req, res) => {
-	const {
-	  title,
-	  slug,
-	  category,
-	  description,
-	  originalPrice,
-	  price,
-	  titleIndex,
-	} = req.body;
-  
-	const file = req.file;
-  
-	if (
-	  !title ||
-	  !slug ||
-	  !category ||
-	  !description ||
-	  !originalPrice ||
-	  !price ||
-	  !titleIndex ||
-	  !file
-	) {
-	  return res.status(400).json({ message: "모든 필드를 입력해주세요." });
-	}
-  
-	try {
-	  const existingSlug = await Book.findOne({ slug });
-	  if (existingSlug) {
-		return res.status(400).json({ message: "이미 존재하는 슬러그입니다." });
-	  }
-  
-	  const existingIndex = await Book.findOne({ titleIndex: parseInt(titleIndex) });
-	  if (existingIndex) {
-		return res.status(400).json({ message: "이미 존재하는 인덱스입니다." });
-	  }
-  
-	  const newBook = new Book({
-		title,
-		slug,
-		category,
-		fileName: file.filename,
-		description,
-		originalPrice: parseInt(originalPrice),
-		price: parseInt(price),
-		titleIndex: parseInt(titleIndex),
-	  });
-  
-	  await newBook.save();
-  
-	  res.json({ message: "전자책 등록 완료", book: newBook });
-	} catch (err) {
-	  console.error("전자책 등록 실패:", err);
-	  res.status(500).json({ message: "서버 오류" });
-	}
-  });
+  const {
+    title,
+    slug,
+    category,
+    description,
+    originalPrice,
+    price,
+    titleIndex,
+  } = req.body;
 
-  // ✅ 전자책 삭제
+  const file = req.file;
+
+  if (
+    !title ||
+    !slug ||
+    !category ||
+    !description ||
+    !originalPrice ||
+    !price ||
+    !titleIndex ||
+    !file
+  ) {
+    return res.status(400).json({ message: "모든 필드를 입력해주세요." });
+  }
+
+  try {
+    const existingSlug = await Book.findOne({ slug });
+    if (existingSlug) {
+      return res.status(400).json({ message: "이미 존재하는 슬러그입니다." });
+    }
+
+    const existingIndex = await Book.findOne({
+      titleIndex: parseInt(titleIndex),
+    });
+    if (existingIndex) {
+      return res.status(400).json({ message: "이미 존재하는 인덱스입니다." });
+    }
+
+    const newBook = new Book({
+      title,
+      slug,
+      category,
+      fileName: file.filename,
+      description,
+      originalPrice: parseInt(originalPrice),
+      price: parseInt(price),
+      titleIndex: parseInt(titleIndex),
+    });
+
+    await newBook.save();
+
+    res.json({ message: "전자책 등록 완료", book: newBook });
+  } catch (err) {
+    console.error("전자책 등록 실패:", err);
+    res.status(500).json({ message: "서버 오류" });
+  }
+});
+
+// ✅ 전자책 삭제
 router.delete("/books/:id", async (req, res) => {
-	try {
-	  await Book.findByIdAndDelete(req.params.id);
-	  res.json({ message: "삭제 완료" });
-	} catch (err) {
-	  console.error("삭제 실패:", err);
-	  res.status(500).json({ message: "서버 오류" });
-	}
-  });
-  
-  // ✅ 전자책 수정
-  router.put("/books/:id", async (req, res) => {
-	try {
-	  const {
-		title,
-		slug,
-		description,
-		originalPrice,
-		price,
-		titleIndex,
-		category,
-	  } = req.body;
-  
-	  const existingIndex = await Book.findOne({
-		_id: { $ne: req.params.id },
-		titleIndex: titleIndex,
-	  });
-  
-	  if (existingIndex) {
-		return res.status(400).json({ message: "이미 존재하는 인덱스입니다." });
-	  }
-  
-	  const updated = await Book.findByIdAndUpdate(
-		req.params.id,
-		{
-		  title,
-		  slug,
-		  description,
-		  originalPrice,
-		  price,
-		  titleIndex,
-		  category,
-		},
-		{ new: true }
-	  );
-  
-	  res.json({ message: "수정 완료", book: updated });
-	} catch (err) {
-	  console.error("수정 실패:", err);
-	  res.status(500).json({ message: "서버 오류" });
-	}
-  });
+  try {
+    await Book.findByIdAndDelete(req.params.id);
+    res.json({ message: "삭제 완료" });
+  } catch (err) {
+    console.error("삭제 실패:", err);
+    res.status(500).json({ message: "서버 오류" });
+  }
+});
+
+// ✅ 전자책 수정
+router.put("/books/:id", async (req, res) => {
+  try {
+    const {
+      title,
+      slug,
+      description,
+      originalPrice,
+      price,
+      titleIndex,
+      category,
+    } = req.body;
+
+    const existingIndex = await Book.findOne({
+      _id: { $ne: req.params.id },
+      titleIndex: titleIndex,
+    });
+
+    if (existingIndex) {
+      return res.status(400).json({ message: "이미 존재하는 인덱스입니다." });
+    }
+
+    // 👉 기존 책 데이터에서 fileName 가져오기
+    const existingBook = await Book.findById(req.params.id);
+    if (!existingBook) {
+      return res.status(404).json({ message: "책을 찾을 수 없습니다." });
+    }
+
+    const updated = await Book.findByIdAndUpdate(
+      req.params.id,
+      {
+        title,
+        slug,
+        description,
+        originalPrice,
+        price,
+        titleIndex,
+        category,
+        fileName: existingBook.fileName, // ✅ 기존 파일명 유지
+      },
+      { new: true }
+    );
+
+    res.json({ message: "수정 완료", book: updated });
+  } catch (err) {
+    console.error("수정 실패:", err);
+    res.status(500).json({ message: "서버 오류" });
+  }
+});
 
 export default router;
