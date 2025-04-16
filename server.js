@@ -26,7 +26,7 @@ dotenv.config({ path: envFile });
 
 const app = express();
 
-// ✅ CORS 설정
+// ✅ CORS 설정 (요청 origin 로그 추가)
 const allowedOrigins =
   process.env.NODE_ENV === "production"
     ? [
@@ -41,9 +41,11 @@ const allowedOrigins =
 app.use(
   cors({
     origin: function (origin, callback) {
+      console.log("🌐 요청 Origin:", origin); // ✅ origin 로그 출력
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
+        console.warn("⛔ CORS 차단된 Origin:", origin);
         callback(new Error("Not allowed by CORS"));
       }
     },
