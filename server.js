@@ -35,6 +35,8 @@ const allowedOrigins =
         "https://www.careerbooks.shop",
         "http://www.careerbooks.shop",
         "https://api.careerbooks.shop",
+        "https://careerbooks-frontend.onrender.com", // ✅ Render 프론트에서 요청할 때 사용
+        "https://careerbooks-server.onrender.com", // ✅ 혹시 백엔드 URL에서 직접 호출 시
       ]
     : ["http://localhost:5173"];
 
