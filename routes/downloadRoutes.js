@@ -15,7 +15,7 @@ const __dirname = dirname(__filename);
 // ✅ 무료 전자책은 인증 없이 다운로드 허용
 router.get('/frontend00', async (req, res) => {
   try {
-    const filePath = path.join(__dirname, '..', 'uploads', 'frontend00.zip');
+	const filePath = path.join(__dirname, '..', '..', 'uploads', 'frontend00.zip');
     res.download(filePath, 'frontend00.zip');
   } catch (err) {
     console.error('무료 전자책 다운로드 오류:', err);
@@ -52,7 +52,7 @@ router.get('/:slug', verifyToken, async (req, res) => {
       }
     }
 
-    const filePath = path.join(__dirname, '..', 'uploads', book.fileName);
+	const filePath = path.join(__dirname, '..', '..', 'uploads', book.fileName);
     res.download(filePath, book.fileName);
   } catch (err) {
     console.error('파일 다운로드 오류:', err);
