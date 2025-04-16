@@ -8,17 +8,20 @@ import { dirname } from 'path';
 
 const router = express.Router();
 
+// ✅ Cloudflare R2 public base URL
+const BASE_URL = "https://pub-bb775a03143c476396cd5c6200cab293.r2.dev";
+
 // 현재 파일의 절대 경로 설정 (ESM 환경용)
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// ✅ 무료 전자책은 인증 없이 다운로드 허용
+// ✅ 무료 전자책은 Cloudflare R2 링크로 리디렉션
 router.get('/frontend00', async (req, res) => {
   try {
-	const filePath = path.join(__dirname, '..', 'uploads', 'frontend00.zip');
-    res.download(filePath, 'frontend00.zip');
+    const redirectUrl = `${BASE_URL}/frontend00.zip`;
+    return res.redirect(redirectUrl);
   } catch (err) {
-    console.error('무료 전자책 다운로드 오류:', err);
+    console.error('무료 전자책 redirect 오류:', err);
     res.status(500).send('무료 전자책 다운로드 실패');
   }
 });
