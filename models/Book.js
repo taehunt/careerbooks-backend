@@ -11,7 +11,13 @@ const bookSchema = new mongoose.Schema(
     price: Number,
     originalPrice: Number,
 
-    // ✅ 판매 횟수 추가
+	// ✅ 크몽 판매 링크
+    kmongUrl: {
+      type: String,
+      default: "",
+    },
+
+    // ✅ 판매 횟수 증가
     salesCount: {
       type: Number,
       default: 0,

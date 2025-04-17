@@ -60,6 +60,7 @@ router.post("/books", upload.single("file"), async (req, res) => {
     originalPrice,
     price,
     titleIndex,
+    kmongUrl, // ✅ 추가
   } = req.body;
 
   const file = req.file;
@@ -99,6 +100,7 @@ router.post("/books", upload.single("file"), async (req, res) => {
       originalPrice: parseInt(originalPrice),
       price: parseInt(price),
       titleIndex: parseInt(titleIndex),
+      kmongUrl: kmongUrl || "", // ✅ 크몽 링크 저장
     });
 
     await newBook.save();
@@ -132,6 +134,7 @@ router.put("/books/:id", async (req, res) => {
       price,
       titleIndex,
       category,
+      kmongUrl, // ✅ 추가
     } = req.body;
 
     const existingIndex = await Book.findOne({
@@ -143,7 +146,6 @@ router.put("/books/:id", async (req, res) => {
       return res.status(400).json({ message: "이미 존재하는 인덱스입니다." });
     }
 
-    // 👉 기존 책 데이터에서 fileName 가져오기
     const existingBook = await Book.findById(req.params.id);
     if (!existingBook) {
       return res.status(404).json({ message: "책을 찾을 수 없습니다." });
@@ -159,7 +161,8 @@ router.put("/books/:id", async (req, res) => {
         price,
         titleIndex,
         category,
-        fileName: existingBook.fileName, // ✅ 기존 파일명 유지
+        fileName: existingBook.fileName,
+        kmongUrl: kmongUrl || "", // ✅ 수정 시 크몽 링크 반영
       },
       { new: true }
     );
