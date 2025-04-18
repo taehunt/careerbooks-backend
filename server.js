@@ -1,3 +1,5 @@
+// root/server/server.js
+
 import express from "express";
 import path, { dirname as _dirname } from "path";
 import { fileURLToPath } from "url";
@@ -14,7 +16,7 @@ import downloadRoutes from "./routes/downloadRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import slideRoutes from "./routes/slideRoutes.js";
 
-// Models (for initial setup)
+// Models
 import User from "./models/User.js";
 import Book from "./models/Book.js";
 
@@ -37,28 +39,29 @@ const allowedOrigins =
   process.env.NODE_ENV === "production"
     ? [
         "https://careerbooks.shop",
-        "http://careerbooks.shop",
         "https://www.careerbooks.shop",
-        "http://www.careerbooks.shop",
-        "https://api.careerbooks.shop",
-        "https://careerbooks-frontend.onrender.com",
-        "https://careerbooks-server.onrender.com",
       ]
     : ["http://localhost:5173"];
 
 app.use(
   cors({
-    origin(origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"), false);
-      }
-    },
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    origin: allowedOrigins,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     credentials: true,
   })
 );
+
+// 모든 프리플라이트 요청 허용
+app.options("*", cors({ origin: allowedOrigins, credentials: true }));
+
+// 허용 헤더 추가
+app.use((req, res, next) => {
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+  );
+  next();
+});
 
 app.use(cookieParser());
 app.use(
@@ -77,7 +80,7 @@ app.use(
 app.use(express.json());
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// 3) 슬라이드 전용 라우트 마운트
+// 3) 슬라이드 전용 라우트
 app.use("/api/admin/slides", slideRoutes);
 
 // 기존 API 라우트
@@ -91,7 +94,7 @@ app.get("/api/ping", (req, res) => {
   res.send("pong");
 });
 
-// DB 연결 및 초기화
+// DB 연결 및 서버 시작
 mongoose
   .connect(process.env.MONGO_URI)
   .then(async () => {
@@ -111,7 +114,7 @@ mongoose
       }
     }
 
-    // 기본 데이터 확인
+    // 책 데이터 확인
     const bookCount = await Book.countDocuments();
     if (bookCount === 0) {
       // 초기 데이터 삽입 가능
