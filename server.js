@@ -37,31 +37,23 @@ app.use(
 // 2) CORS 설정
 const allowedOrigins =
   process.env.NODE_ENV === "production"
-    ? [
-        "https://careerbooks.shop",
-        "https://www.careerbooks.shop",
-      ]
+    ? ["https://careerbooks.shop", "https://www.careerbooks.shop"]
     : ["http://localhost:5173"];
 
 app.use(
   cors({
     origin: allowedOrigins,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: [
+      "Origin",
+      "X-Requested-With",
+      "Content-Type",
+      "Accept",
+      "Authorization",
+    ],
     credentials: true,
   })
 );
-
-// 모든 프리플라이트 요청 허용
-app.options("*", cors({ origin: allowedOrigins, credentials: true }));
-
-// 허용 헤더 추가
-app.use((req, res, next) => {
-  res.header(
-    "Access-Control-Allow-Headers",
-    "Origin, X-Requested-With, Content-Type, Accept, Authorization"
-  );
-  next();
-});
 
 app.use(cookieParser());
 app.use(
