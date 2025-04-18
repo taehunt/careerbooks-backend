@@ -20,13 +20,11 @@ import adminRoutes from "./routes/adminRoutes.js";
 import User from "./models/User.js";
 import Book from "./models/Book.js";
 
-// ✅ 환경 변수 파일 로드
 const envFile = `.env.${process.env.NODE_ENV || "development"}`;
 dotenv.config({ path: envFile });
 
 const app = express();
 
-// ✅ CORS 설정
 const allowedOrigins =
   process.env.NODE_ENV === "production"
     ? [
@@ -65,7 +63,7 @@ app.use(
     cookie: {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      sameSite: "none",
     },
   })
 );
@@ -73,22 +71,18 @@ app.use(
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// ✅ Body, 정적 파일 처리
 app.use(express.json());
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// ✅ API 경로 연결
 app.use("/api/admin", adminRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/books", bookRoutes);
 app.use("/api/downloads", downloadRoutes);
 
-// ✅ 헬스 체크용
 app.get("/api/ping", (req, res) => {
   res.send("pong");
 });
 
-// ✅ DB 연결 및 초기화
 mongoose
   .connect(process.env.MONGO_URI)
   .then(async () => {
@@ -110,7 +104,7 @@ mongoose
 
     const bookCount = await Book.countDocuments();
     if (bookCount === 0) {
-      // 필요시 샘플 데이터 삽입 가능
+      // 초기 데이터 삽입 가능
     } else {
       console.log(`✅ 책 데이터 이미 존재 (${bookCount}권). 초기화 생략`);
     }
