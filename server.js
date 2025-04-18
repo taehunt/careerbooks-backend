@@ -1,4 +1,3 @@
-// server/server.js
 import express from "express";
 import path from "path";
 import mongoose from "mongoose";
@@ -16,47 +15,32 @@ import bookRoutes from "./routes/bookRoutes.js";
 import downloadRoutes from "./routes/downloadRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 
-// Models (for initial setup)
+// Models
 import User from "./models/User.js";
 import Book from "./models/Book.js";
 
-const envFile = `.env.${process.env.NODE_ENV || "development"}`;
-dotenv.config({ path: envFile });
+dotenv.config({ path: `.env.${process.env.NODE_ENV || "development"}` });
 
 const app = express();
 
+// 1) 이미지 정적 서빙
 app.use(
   "/images",
   express.static(path.join(__dirname, "../client/public/images"))
 );
-// 2) 슬라이드 전용 라우트 연결
-import slideRoutes from "./routes/slideRoutes.js";
-app.use("/api/admin/slides", slideRoutes);
 
 const allowedOrigins =
   process.env.NODE_ENV === "production"
-    ? [
-        "https://careerbooks.shop",
-        "http://careerbooks.shop",
-        "https://www.careerbooks.shop",
-        "http://www.careerbooks.shop",
-        "https://api.careerbooks.shop",
-        "https://careerbooks-frontend.onrender.com",
-        "https://careerbooks-server.onrender.com",
-      ]
+    ? [ /* production origins */ ]
     : ["http://localhost:5173"];
 
+// 2) CORS 설정 (슬라이드 라우트에도 헤더가 붙습니다)
 app.use(
   cors({
-    origin: function (origin, callback) {
-      console.log("🌐 요청 Origin:", origin);
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        console.warn("⛔ CORS 차단된 Origin:", origin);
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
+    origin: (origin, callback) =>
+      !origin || allowedOrigins.includes(origin)
+        ? callback(null, true)
+        : callback(new Error("Not allowed by CORS")),
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   })
@@ -82,44 +66,20 @@ const __dirname = dirname(__filename);
 app.use(express.json());
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
+// 3) 슬라이드 전용 라우트 마운트 (CORS 이후에)
+import slideRoutes from "./routes/slideRoutes.js";
+app.use("/api/admin/slides", slideRoutes);
+
+// 기존 API 라우트
 app.use("/api/admin", adminRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/books", bookRoutes);
 app.use("/api/downloads", downloadRoutes);
 
-app.get("/api/ping", (req, res) => {
-  res.send("pong");
-});
+app.get("/api/ping", (req, res) => res.send("pong"));
 
+// DB 연결 및 서버 시작
 mongoose
   .connect(process.env.MONGO_URI)
-  .then(async () => {
-    const users = await User.find();
-
-    for (const user of users) {
-      if (
-        user.purchasedBooks.length > 0 &&
-        typeof user.purchasedBooks[0] === "string"
-      ) {
-        user.purchasedBooks = user.purchasedBooks.map((slug) => ({
-          slug,
-          purchasedAt: new Date(),
-        }));
-        await user.save();
-        console.log(`✅ 유저 ${user.userId} 마이그레이션 완료`);
-      }
-    }
-
-    const bookCount = await Book.countDocuments();
-    if (bookCount === 0) {
-      // 초기 데이터 삽입 가능
-    } else {
-      console.log(`✅ 책 데이터 이미 존재 (${bookCount}권). 초기화 생략`);
-    }
-
-    const PORT = process.env.PORT || 5000;
-    app.listen(PORT, () => {
-      console.log(`✅ 서버 시작됨: http://localhost:${PORT}`);
-    });
-  })
+  .then(/* ... */)
   .catch((err) => console.error("❌ MongoDB 연결 실패:", err));
