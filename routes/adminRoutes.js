@@ -5,6 +5,7 @@ import { fileURLToPath } from "url";
 import multer from "multer";
 import User from "../models/User.js";
 import Book from "../models/Book.js";
+import jwt from "jsonwebtoken";
 
 const router = express.Router();
 
@@ -13,18 +14,41 @@ const __dirname = path.dirname(__filename);
 
 const SLIDES_FILE = path.join(__dirname, "../data/slides.json");
 
+// ✅ 관리자 인증 미들웨어
+function verifyAdmin(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ message: "인증 정보가 없습니다." });
+  }
+
+  const token = authHeader.split(" ")[1];
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (!decoded || decoded.role !== "admin") {
+      return res.status(403).json({ message: "관리자 권한이 없습니다." });
+    }
+    req.user = decoded;
+    next();
+  } catch (err) {
+    console.error("인증 실패:", err);
+    return res.status(401).json({ message: "토큰이 유효하지 않습니다." });
+  }
+}
+
+// ✅ 슬라이드 로딩 함수
 function loadSlides() {
   if (!fs.existsSync(SLIDES_FILE)) return [];
   const data = fs.readFileSync(SLIDES_FILE, "utf-8");
   return JSON.parse(data);
 }
 
+// ✅ 슬라이드 불러오기
 router.get("/slides", (req, res) => {
   const slides = loadSlides();
   res.json(slides);
 });
 
-// ✅ 업로드 디렉토리 설정
+// ✅ 업로드 디렉토리 생성
 const uploadPath = path.join(__dirname, "../uploads");
 if (!fs.existsSync(uploadPath)) fs.mkdirSync(uploadPath);
 
@@ -33,14 +57,16 @@ const storage = multer.diskStorage({
     cb(null, uploadPath);
   },
   filename: function (req, file, cb) {
-    cb(null, `${req.body.slug}.zip`); // slug 기반 파일명
+    cb(null, `${req.body.slug}.zip`);
   },
 });
 
 const upload = multer({ storage });
 
+/* -------------------------- 관리자 API -------------------------- */
+
 // ✅ 회원 목록 조회
-router.get("/users", async (req, res) => {
+router.get("/users", verifyAdmin, async (req, res) => {
   try {
     const users = await User.find().sort({ createdAt: -1 });
     res.json(users);
@@ -51,7 +77,7 @@ router.get("/users", async (req, res) => {
 });
 
 // ✅ 전자책 등록
-router.post("/books", upload.single("file"), async (req, res) => {
+router.post("/books", verifyAdmin, upload.single("file"), async (req, res) => {
   const {
     title,
     slug,
@@ -60,7 +86,7 @@ router.post("/books", upload.single("file"), async (req, res) => {
     originalPrice,
     price,
     titleIndex,
-    kmongUrl, // ✅ 추가
+    kmongUrl,
   } = req.body;
 
   const file = req.file;
@@ -100,11 +126,10 @@ router.post("/books", upload.single("file"), async (req, res) => {
       originalPrice: parseInt(originalPrice),
       price: parseInt(price),
       titleIndex: parseInt(titleIndex),
-      kmongUrl: kmongUrl || "", // ✅ 크몽 링크 저장
+      kmongUrl: kmongUrl || "",
     });
 
     await newBook.save();
-
     res.json({ message: "전자책 등록 완료", book: newBook });
   } catch (err) {
     console.error("전자책 등록 실패:", err);
@@ -113,7 +138,7 @@ router.post("/books", upload.single("file"), async (req, res) => {
 });
 
 // ✅ 전자책 삭제
-router.delete("/books/:id", async (req, res) => {
+router.delete("/books/:id", verifyAdmin, async (req, res) => {
   try {
     await Book.findByIdAndDelete(req.params.id);
     res.json({ message: "삭제 완료" });
@@ -124,22 +149,22 @@ router.delete("/books/:id", async (req, res) => {
 });
 
 // ✅ 전자책 수정
-router.put("/books/:id", async (req, res) => {
-  try {
-    const {
-      title,
-      slug,
-      description,
-      originalPrice,
-      price,
-      titleIndex,
-      category,
-      kmongUrl, // ✅ 추가
-    } = req.body;
+router.put("/books/:id", verifyAdmin, async (req, res) => {
+  const {
+    title,
+    slug,
+    description,
+    originalPrice,
+    price,
+    titleIndex,
+    category,
+    kmongUrl,
+  } = req.body;
 
+  try {
     const existingIndex = await Book.findOne({
       _id: { $ne: req.params.id },
-      titleIndex: titleIndex,
+      titleIndex: parseInt(titleIndex),
     });
 
     if (existingIndex) {
@@ -157,12 +182,12 @@ router.put("/books/:id", async (req, res) => {
         title,
         slug,
         description,
-        originalPrice,
-        price,
-        titleIndex,
+        originalPrice: parseInt(originalPrice),
+        price: parseInt(price),
+        titleIndex: parseInt(titleIndex),
         category,
         fileName: existingBook.fileName,
-        kmongUrl: kmongUrl || "", // ✅ 수정 시 크몽 링크 반영
+        kmongUrl: kmongUrl || "",
       },
       { new: true }
     );
