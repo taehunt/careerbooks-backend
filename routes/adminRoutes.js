@@ -1,9 +1,7 @@
-// 파일 경로: root/server/routes/adminRoutes.js
-
 import express from 'express';
 import Book from '../models/Book.js';
 import User from '../models/User.js';
-import { verifyAdmin } from '../middleware/auth.js';
+import { verifyAdmin } from '../middleware/verifyAdmin.js';
 
 const router = express.Router();
 
