@@ -50,18 +50,6 @@ const slides = [
     textAlign: 'right',
     fontSize: '42px',
   },
-  {
-    image: '/images/slide5.jpg',
-    bgColor: '#111827',
-    title: '실전 프로젝트 예제',
-    subtitle: '코드로 배우는 실전 스킬',
-    button1: '시작하기',
-    button1Url: '/books?category=backend',
-    button2: '회원가입',
-    button2Url: '/signup',
-    textAlign: 'center',
-    fontSize: '44px',
-  },
 ];
 
 router.get('/', (req, res) => {
