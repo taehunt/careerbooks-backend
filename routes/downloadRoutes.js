@@ -1,8 +1,14 @@
 import express from "express";
 import https from "https";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 import { verifyToken } from "../middleware/auth.js";
 import Book from "../models/Book.js";
 import User from "../models/User.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const router = express.Router();
 
@@ -12,13 +18,20 @@ const allowedOrigins =
     ? ["https://careerbooks.shop", "https://www.careerbooks.shop"]
     : ["http://localhost:5173", "https://www.careerbooks.shop"];
 
-// CORS 헤더 설정 함수
+// CORS 헤더 설정
 function setCORSHeaders(res, origin) {
   if (allowedOrigins.includes(origin)) {
     res.setHeader("Access-Control-Allow-Origin", origin);
     res.setHeader("Access-Control-Allow-Credentials", "true");
   }
 }
+
+// 프리플라이트 CORS 허용
+router.options("*", (req, res) => {
+  const origin = req.headers.origin;
+  setCORSHeaders(res, origin);
+  res.sendStatus(200);
+});
 
 // ✅ 무료 전자책 프록시 다운로드
 router.get("/frontend00", (req, res) => {
@@ -42,7 +55,7 @@ router.get("/frontend00", (req, res) => {
     });
 });
 
-// ✅ 유료 전자책 프록시 다운로드 (인증·구매·유효기간 검증)
+// ✅ 유료 전자책 프록시/로컬 다운로드 (인증·구매·유효기간 검증)
 router.get("/:slug", verifyToken, async (req, res) => {
   const { slug } = req.params;
   const origin = req.headers.origin;
@@ -67,24 +80,45 @@ router.get("/:slug", verifyToken, async (req, res) => {
 
     const book = await Book.findOne({ slug });
     if (!book) return res.status(404).send("책을 찾을 수 없습니다.");
-    const zipUrl = book.fileName;
-    if (!zipUrl || !zipUrl.startsWith("https://")) {
-      return res.status(400).send("유효하지 않은 ZIP URL입니다.");
+
+    const zipRef = book.fileName;
+    if (!zipRef) {
+      return res.status(400).send("다운로드 파일 정보가 없습니다.");
     }
 
-    https
-      .get(zipUrl, (upstream) => {
-        res.setHeader("Content-Type", "application/zip");
-        res.setHeader(
-          "Content-Disposition",
-          `attachment; filename="${slug}.zip"`
-        );
-        upstream.pipe(res);
-      })
-      .on("error", (err) => {
-        console.error("유료 전자책 다운로드 오류:", err);
+    if (zipRef.startsWith("https://")) {
+      // Cloudflare URL 프록시
+      https
+        .get(zipRef, (upstream) => {
+          res.setHeader("Content-Type", "application/zip");
+          res.setHeader(
+            "Content-Disposition",
+            `attachment; filename="${slug}.zip"`
+          );
+          upstream.pipe(res);
+        })
+        .on("error", (err) => {
+          console.error("유료 전자책 다운로드 오류:", err);
+          res.status(500).send("다운로드 실패");
+        });
+    } else {
+      // 로컬 /uploads 디렉토리 파일
+      const filePath = path.join(__dirname, "../uploads", zipRef);
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).send("다운로드 파일을 찾을 수 없습니다.");
+      }
+      res.setHeader("Content-Type", "application/zip");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="${slug}.zip"`
+      );
+      const stream = fs.createReadStream(filePath);
+      stream.pipe(res);
+      stream.on("error", (err) => {
+        console.error("로컬 파일 스트림 오류:", err);
         res.status(500).send("다운로드 실패");
       });
+    }
   } catch (err) {
     console.error("다운로드 처리 중 오류:", err);
     res.status(500).send("다운로드 실패");
