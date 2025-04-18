@@ -25,6 +25,14 @@ dotenv.config({ path: envFile });
 
 const app = express();
 
+app.use(
+  "/images",
+  express.static(path.join(__dirname, "../client/public/images"))
+);
+// 2) 슬라이드 전용 라우트 연결
+import slideRoutes from "./routes/slideRoutes.js";
+app.use("/api/admin/slides", slideRoutes);
+
 const allowedOrigins =
   process.env.NODE_ENV === "production"
     ? [
