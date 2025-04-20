@@ -1,15 +1,7 @@
-# 이 책은 프론트엔드 입문자를 위한 완벽 가이드입니다.
+# 진짜 생초보를 위한 웹사이트 만들기
 
-- HTML, CSS, JS 기본부터
-- 실전 프로젝트까지
+<img src="/images/book-cover.png" width="200" />
 
+<p>이 책은 HTML을 처음 접하는 사람도 따라할 수 있도록 구성되었습니다.</p>
 
-test
-
-test
-test
-
-
-
-
-test
+<iframe src="/widgets/timer.html" width="320" height="40" frameborder="0"></iframe>
