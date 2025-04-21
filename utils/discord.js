@@ -1,6 +1,6 @@
 import axios from "axios";
 
-export async function sendDiscordWebhook(data) {
+export async function sendDiscordWebhook({ content }) {
   const url = process.env.DISCORD_WEBHOOK_URL;
   if (!url) return;
 
@@ -9,8 +9,8 @@ export async function sendDiscordWebhook(data) {
   };
 
   try {
-    await axios.post(url, message);
+    await axios.post(url, { content });
   } catch (err) {
-    console.error("❌ 디스코드 웹훅 실패:", err.message);
+    console.error("❌ Discord Webhook 전송 실패:", err.response?.data || err.message);
   }
 }
