@@ -1,6 +1,7 @@
 import express from "express";
 import PurchaseRequest from "../models/PurchaseRequest.js";
 import { sendDiscordWebhook } from "../utils/discord.js";
+import User from "../models/User.js";
 
 const router = express.Router();
 
@@ -12,12 +13,22 @@ router.post("/", async (req, res) => {
   }
 
   try {
-    // DB 저장
+    // 요청 저장
     const request = await PurchaseRequest.create({ depositor, email, slug, memo });
 
-    // Discord 알림
+    // 디스코드 알림용 유저 정보
+    let userInfoText = "";
+
+    if (req.session.userId) {
+      const user = await User.findById(req.session.userId);
+      if (user) {
+        userInfoText = `\n🙍‍♂️ 유저 ID: ${user.userId}\n📝 닉네임: ${user.nickname}`;
+      }
+    }
+
+    // 디스코드 웹훅 전송
     if (process.env.DISCORD_WEBHOOK_URL) {
-      await sendDiscordWebhook({ depositor, email, slug, memo });
+      await sendDiscordWebhook({ depositor, email, slug, memo, userInfoText });
     }
 
     res.status(201).json({ message: "입금 정보가 제출되었습니다." });
