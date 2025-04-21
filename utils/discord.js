@@ -1,4 +1,3 @@
-// 파일: server/utils/discord.js
 import axios from "axios";
 
 export async function sendDiscordWebhook({ depositor, email, slug, memo }) {

@@ -1,7 +1,6 @@
-// 파일 위치: server/routes/purchaseRequestRoutes.js
 import express from "express";
 import PurchaseRequest from "../models/PurchaseRequest.js";
-import { sendDiscordWebhook } from "../utils/discord.js"; // 선택사항
+import { sendDiscordWebhook } from "../utils/discord.js";
 
 const router = express.Router();
 
@@ -13,13 +12,12 @@ router.post("/", async (req, res) => {
   }
 
   try {
+    // DB 저장
     const request = await PurchaseRequest.create({ depositor, email, slug, memo });
 
-    // 선택: Discord 알림
+    // Discord 알림
     if (process.env.DISCORD_WEBHOOK_URL) {
-      await sendDiscordWebhook({
-        content: `💸 입금 신청 접수됨\n\n입금자: ${depositor}\n이메일: ${email}\n전자책: ${slug}\n메모: ${memo || "(없음)"}`,
-      });
+      await sendDiscordWebhook({ depositor, email, slug, memo });
     }
 
     res.status(201).json({ message: "입금 정보가 제출되었습니다." });
