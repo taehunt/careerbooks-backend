@@ -1,7 +1,12 @@
+// 파일 경로: root/server/routes/adminRoutes.js
+
 import express from "express";
 import Book from "../models/Book.js";
 import User from "../models/User.js";
+import PurchaseRequest from "../models/PurchaseRequest.js";
 import { verifyAdmin } from "../middleware/verifyAdmin.js";
+import nodemailer from "nodemailer";
+import axios from "axios";
 
 const router = express.Router();
 
@@ -31,11 +36,9 @@ router.post("/books", verifyAdmin, async (req, res) => {
   } = req.body;
 
   try {
-    // 중복 slug 검사
     if (await Book.findOne({ slug })) {
       return res.status(400).json({ message: "이미 존재하는 슬러그입니다." });
     }
-    // 중복 titleIndex 검사
     if (await Book.findOne({ titleIndex: parseInt(titleIndex) })) {
       return res.status(400).json({ message: "이미 존재하는 인덱스입니다." });
     }
@@ -48,7 +51,7 @@ router.post("/books", verifyAdmin, async (req, res) => {
       price: parseInt(price),
       titleIndex: parseInt(titleIndex),
       category,
-      fileName: zipUrl, // Cloudflare ZIP 파일 URL
+      fileName: zipUrl,
       kmongUrl: kmongUrl || "",
     });
 
@@ -124,9 +127,29 @@ router.delete("/books/:id", verifyAdmin, async (req, res) => {
   }
 });
 
-import nodemailer from "nodemailer";
+// 관리자 전용: 유저의 purchasedBooks 갱신
+router.post("/confirm-purchase", verifyAdmin, async (req, res) => {
+  const { userId, slug } = req.body;
+  if (!userId || !slug) return res.status(400).json({ message: "필수 정보 누락" });
 
-// POST /api/admin/send-ebook
+  try {
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "유저를 찾을 수 없습니다." });
+
+    const alreadyPurchased = user.purchasedBooks?.some((b) => b.slug === slug);
+    if (alreadyPurchased) return res.status(400).json({ message: "이미 구매한 전자책입니다." });
+
+    user.purchasedBooks.push({ slug, purchasedAt: new Date() });
+    await user.save();
+
+    res.json({ message: "구매 확정 완료" });
+  } catch (err) {
+    console.error("구매 확정 실패:", err);
+    res.status(500).json({ message: "서버 오류" });
+  }
+});
+
+// 관리자 전용: 전자책 구매자 이메일로 ZIP 발송
 router.post("/send-ebook", verifyAdmin, async (req, res) => {
   const { email, fileName, title } = req.body;
   if (!email || !fileName) {
