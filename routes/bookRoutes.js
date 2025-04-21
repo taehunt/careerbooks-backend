@@ -31,7 +31,9 @@ router.get("/", async (req, res) => {
 // ✅ 카테고리별 도서 (경로 방식)
 router.get("/category/:category", async (req, res) => {
   try {
-    const books = await Book.find({ category: req.params.category }).sort({ titleIndex: 1 });
+    const books = await Book.find({ category: req.params.category }).sort({
+      titleIndex: 1,
+    });
     res.json(books);
   } catch (err) {
     res.status(500).json({ error: "카테고리별 책 조회 실패" });
@@ -90,16 +92,21 @@ router.get("/:slug/description", async (req, res) => {
 // ✅ 설명 저장하기 (관리자만)
 router.put("/:slug/description", verifyToken, async (req, res) => {
   const user = await User.findById(req.user.id);
+  console.log("🔐 유저:", user?.email, user?.role);
+
   if (!user || user.role !== "admin") {
+    console.warn("⛔ 관리자 아님 또는 유저 없음");
     return res.status(403).json({ message: "권한 없음" });
   }
 
+  const filePath = path.join(DESC_FOLDER, `${req.params.slug}.md`);
+  console.log("💾 저장할 파일 경로:", filePath);
+
   try {
-    const filePath = path.join(DESC_FOLDER, `${req.params.slug}.md`);
     fs.writeFileSync(filePath, req.body.description || "", "utf-8");
     res.json({ message: "설명이 저장되었습니다." });
   } catch (err) {
-    console.error("설명 저장 오류:", err);
+    console.error("❌ 설명 저장 오류:", err);
     res.status(500).json({ message: "설명 저장 중 오류 발생" });
   }
 });
@@ -110,7 +117,9 @@ router.get("/:slug/access", verifyToken, async (req, res) => {
   if (!user) return res.status(401).json({ allowed: false });
 
   const hasBook = user.purchasedBooks.some((pb) =>
-    typeof pb === "string" ? pb === req.params.slug : pb.slug === req.params.slug
+    typeof pb === "string"
+      ? pb === req.params.slug
+      : pb.slug === req.params.slug
   );
 
   res.json({ allowed: hasBook });
