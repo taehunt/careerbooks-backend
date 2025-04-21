@@ -13,7 +13,7 @@ const router = express.Router();
 // 관리자 전용: 모든 사용자 목록 조회
 router.get("/users", verifyAdmin, async (req, res) => {
   try {
-    const users = await User.find().select("-password"); // 비밀번호 제외
+    const users = await User.find().select("-password");
     res.json(users);
   } catch (err) {
     console.error("회원 목록 조회 실패:", err);

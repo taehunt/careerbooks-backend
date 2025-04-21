@@ -93,7 +93,6 @@ app.get("/api/ping", (req, res) => {
 });
 
 // DB 연결 및 서버 시작
-// DB 연결 및 서버 시작
 mongoose
   .connect(process.env.MONGO_URI)
   .then(async () => {
