@@ -1,10 +1,12 @@
+// server/routes/purchaseRequestRoutes.js
 import express from "express";
 import PurchaseRequest from "../models/PurchaseRequest.js";
 import { sendDiscordWebhook } from "../utils/discord.js";
+import { verifyToken } from "../middleware/auth.js";
 
 const router = express.Router();
 
-router.post("/", async (req, res) => {
+router.post("/", verifyToken, async (req, res) => {
   const { depositor, email, slug, memo } = req.body;
 
   if (!depositor || !email || !slug) {
@@ -12,12 +14,11 @@ router.post("/", async (req, res) => {
   }
 
   try {
-    const request = await PurchaseRequest.create({ depositor, email, slug, memo });
+    await PurchaseRequest.create({ depositor, email, slug, memo });
 
-    let userInfoText = "";
-    if (req.user) {
-      userInfoText = `\n🆔 사용자 ID: ${req.user.userId}\n👤 닉네임: ${req.user.nickname}`;
-    }
+    const userInfoText = req.user
+      ? `\n🧑 사용자 ID: ${req.user.userId}\n🏷 닉네임: ${req.user.nickname}`
+      : "";
 
     await sendDiscordWebhook({
       depositor,
@@ -33,3 +34,5 @@ router.post("/", async (req, res) => {
     res.status(500).json({ message: "서버 오류" });
   }
 });
+
+export default router; // ✅ default export 추가
