@@ -1,24 +1,32 @@
-// server/routes/purchaseRequestRoutes.js
 import express from "express";
+import jwt from "jsonwebtoken";
 import PurchaseRequest from "../models/PurchaseRequest.js";
 import { sendDiscordWebhook } from "../utils/discord.js";
-import { verifyToken } from "../middleware/auth.js";
 
 const router = express.Router();
 
-router.post("/", verifyToken, async (req, res) => {
+router.post("/", async (req, res) => {
   const { depositor, email, slug, memo } = req.body;
 
   if (!depositor || !email || !slug) {
     return res.status(400).json({ message: "필수 항목이 누락되었습니다." });
   }
 
+  // 👤 사용자 정보 추출 (optional)
+  let userInfoText = "";
+  const authHeader = req.headers.authorization;
+  const token = authHeader?.split(" ")[1];
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      userInfoText = `\n🧑 사용자 ID: ${decoded.userId}\n🏷 닉네임: ${decoded.nickname}`;
+    } catch (err) {
+      console.warn("⚠️ 유저 토큰 디코딩 실패 (무시됨):", err.message);
+    }
+  }
+
   try {
     await PurchaseRequest.create({ depositor, email, slug, memo });
-
-    const userInfoText = req.user
-      ? `\n🧑 사용자 ID: ${req.user.userId}\n🏷 닉네임: ${req.user.nickname}`
-      : "";
 
     await sendDiscordWebhook({
       depositor,
@@ -35,4 +43,4 @@ router.post("/", verifyToken, async (req, res) => {
   }
 });
 
-export default router; // ✅ default export 추가
+export default router;
