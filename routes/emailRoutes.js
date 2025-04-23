@@ -6,13 +6,14 @@ import User from "../models/User.js";
 
 const router = express.Router();
 
+// ✅ 여기서 모든 email API 요청 감지
+router.use((req, res, next) => {
+  console.log("📩 emailRoutes 요청:", req.method, req.originalUrl);
+  next();
+});
+
 router.post("/send", async (req, res) => {
   const { userId, slug, to } = req.body;
-
-  router.use((req, res, next) => {
-    console.log("📩 emailRoutes 요청:", req.method, req.originalUrl);
-    next();
-  });
 
   try {
     const book = await Book.findOne({ slug });
