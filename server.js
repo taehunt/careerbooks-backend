@@ -15,6 +15,7 @@ import bookRoutes from "./routes/bookRoutes.js";
 import downloadRoutes from "./routes/downloadRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import slideRoutes from "./routes/slideRoutes.js";
+import descriptionRoutes from "./routes/descriptionRoutes.js";
 
 // Models
 import User from "./models/User.js";
@@ -86,6 +87,7 @@ app.use("/api/books", bookRoutes);
 app.use("/api/downloads", downloadRoutes);
 app.use("/api/purchase-requests", purchaseRequestRoutes);
 app.use("/api/email", emailRoutes);
+app.use("/api/descriptions", descriptionRoutes);
 
 // 헬스 체크
 app.get("/api/ping", (req, res) => {
