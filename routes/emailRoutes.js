@@ -14,29 +14,31 @@ router.post("/send-bulk", async (req, res) => {
   console.log("✅ send-bulk 진입");
   console.log("📦 payload:", req.body);
 
-  const list = req.body;
-  if (!Array.isArray(list)) {
-    return res.status(400).json({ message: "잘못된 형식" });
-  }
-
   try {
-    for (const { slug, to } of list) {
+    for (const { slug, to } of req.body) {
       const book = await Book.findOne({ slug });
-      if (!book || !book.fileName) continue;
+      if (!book) {
+        console.log("❌ book not found for slug:", slug);
+        continue;
+      }
+
+      const url = book.fileName.startsWith("http")
+        ? book.fileName
+        : `https://pub-bb775a03143c476396cd5c6200cab293.r2.dev/${book.fileName}`;
 
       await sendEbookEmail({
         to,
-        subject: `[CareerBooks] ${book.title} 전자책 첨부드립니다.`,
-        text: `요청하신 "${book.title}" 전자책을 보내드립니다. 감사합니다.`,
-        attachmentUrl: `https://pub-bb775a03143c476396cd5c6200cab293.r2.dev/${book.fileName}`,
+        subject: `[CareerBooks] "${book.title}" 전자책 첨부드립니다.`,
+        attachmentUrl: url,
         fileName: book.fileName,
+        bookTitle: book.title,
       });
     }
 
-    res.json({ message: "모든 메일 발송 완료" });
+    res.json({ message: "발송 완료" });
   } catch (err) {
     console.error("❌ 내부 오류:", err);
-    res.status(500).json({ message: "서버 에러 발생" });
+    res.status(500).json({ message: "이메일 발송 실패" });
   }
 });
 
