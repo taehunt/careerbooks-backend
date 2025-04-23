@@ -154,4 +154,27 @@ router.get("/:slug", async (req, res) => {
   });
 });
 
+// ✅ 책 기본 정보(부제목 등) 업데이트 라우트 추가
+router.put("/:slug", verifyToken, async (req, res) => {
+	const user = await User.findById(req.user.id);
+	if (!user || user.role !== "admin") {
+	  return res.status(403).json({ message: "권한 없음" });
+	}
+  
+	try {
+	  const updatedBook = await Book.findOneAndUpdate(
+		{ slug: req.params.slug },
+		req.body,
+		{ new: true }
+	  );
+	  if (!updatedBook) {
+		return res.status(404).json({ message: "책을 찾을 수 없습니다." });
+	  }
+	  res.json({ message: "책 정보 업데이트 완료", book: updatedBook });
+	} catch (err) {
+	  console.error("책 정보 업데이트 오류:", err);
+	  res.status(500).json({ message: "업데이트 중 오류 발생" });
+	}
+  });
+
 export default router;
