@@ -2,17 +2,6 @@ import express from "express";
 import { verifyToken } from "../middleware/auth.js";
 import Book from "../models/Book.js";
 import User from "../models/User.js";
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const DESC_FOLDER = path.join(__dirname, "../descriptions");
-
-if (!fs.existsSync(DESC_FOLDER)) {
-  fs.mkdirSync(DESC_FOLDER);
-}
 
 const router = express.Router();
 
@@ -76,40 +65,38 @@ router.get("/popular", async (req, res) => {
 
 // ✅ 설명 불러오기
 router.get("/:slug/description", async (req, res) => {
-  try {
-    const filePath = path.join(DESC_FOLDER, `${req.params.slug}.md`);
-    if (!fs.existsSync(filePath)) {
-      return res.json({ description: "" });
-    }
-    const content = fs.readFileSync(filePath, "utf-8");
-    res.json({ description: content });
-  } catch (err) {
-    console.error("설명 불러오기 오류:", err);
-    res.status(500).json({ message: "설명을 불러오는 중 오류 발생" });
-  }
-});
+	try {
+	  const book = await Book.findOne({ slug: req.params.slug });
+	  if (!book) return res.status(404).json({ message: "책을 찾을 수 없습니다." });
+  
+	  res.json({ description: book.description || "" }); // 없으면 공백 반환
+	} catch (err) {
+	  console.error("설명 불러오기 오류:", err);
+	  res.status(500).json({ message: "설명을 불러오는 중 오류 발생" });
+	}
+  });
 
 // ✅ 설명 저장하기 (관리자만)
 router.put("/:slug/description", verifyToken, async (req, res) => {
-  const user = await User.findById(req.user.id);
-  console.log("🔐 유저:", user?.email, user?.role);
-
-  if (!user || user.role !== "admin") {
-    console.warn("⛔ 관리자 아님 또는 유저 없음");
-    return res.status(403).json({ message: "권한 없음" });
-  }
-
-  const filePath = path.join(DESC_FOLDER, `${req.params.slug}.md`);
-  console.log("💾 저장할 파일 경로:", filePath);
-
-  try {
-    fs.writeFileSync(filePath, req.body.description || "", "utf-8");
-    res.json({ message: "설명이 저장되었습니다." });
-  } catch (err) {
-    console.error("❌ 설명 저장 오류:", err);
-    res.status(500).json({ message: "설명 저장 중 오류 발생" });
-  }
-});
+	const user = await User.findById(req.user.id);
+	if (!user || user.role !== "admin") {
+	  return res.status(403).json({ message: "권한 없음" });
+	}
+  
+	try {
+	  const book = await Book.findOneAndUpdate(
+		{ slug: req.params.slug },
+		{ description: req.body.description || "" },
+		{ new: true }
+	  );
+	  if (!book) return res.status(404).json({ message: "책을 찾을 수 없습니다." });
+  
+	  res.json({ message: "설명이 저장되었습니다." });
+	} catch (err) {
+	  console.error("설명 저장 오류:", err);
+	  res.status(500).json({ message: "설명 저장 중 오류 발생" });
+	}
+  });
 
 // ✅ 구매 여부 확인
 router.get("/:slug/access", verifyToken, async (req, res) => {

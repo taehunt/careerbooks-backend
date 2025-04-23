@@ -22,6 +22,7 @@ const bookSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+	description: { type: String, default: "" },
   },
   { timestamps: true }
 );
