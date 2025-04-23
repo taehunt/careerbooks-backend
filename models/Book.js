@@ -4,7 +4,7 @@ const bookSchema = new mongoose.Schema(
   {
     title: String,
     slug: { type: String, unique: true },
-    description: String,
+	description: { type: String, default: "" },
     fileName: String,
     category: String,
     titleIndex: Number,
@@ -22,7 +22,7 @@ const bookSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
-	description: { type: String, default: "" },
+	serviceDetail: { type: String, default: "" },
   },
   { timestamps: true }
 );

@@ -63,38 +63,39 @@ router.get("/popular", async (req, res) => {
   }
 });
 
-// ✅ 설명 불러오기
-router.get("/:slug/description", async (req, res) => {
+// ✅ 서비스 설명 가져오기
+router.get("/:slug/service", async (req, res) => {
 	try {
 	  const book = await Book.findOne({ slug: req.params.slug });
 	  if (!book) return res.status(404).json({ message: "책을 찾을 수 없습니다." });
-  
-	  res.json({ description: book.description || "" }); // 없으면 공백 반환
+	  res.json({ serviceDetail: book.serviceDetail || "" });
 	} catch (err) {
-	  console.error("설명 불러오기 오류:", err);
-	  res.status(500).json({ message: "설명을 불러오는 중 오류 발생" });
+	  console.error("서비스 설명 조회 오류:", err);
+	  res.status(500).json({ message: "오류 발생" });
 	}
   });
 
-// ✅ 설명 저장하기 (관리자만)
-router.put("/:slug/description", verifyToken, async (req, res) => {
+// ✅ 서비스 설명 저장하기 (관리자)
+router.put("/:slug/service", verifyToken, async (req, res) => {
 	const user = await User.findById(req.user.id);
 	if (!user || user.role !== "admin") {
 	  return res.status(403).json({ message: "권한 없음" });
 	}
   
+	const { serviceDetail } = req.body;
+  
 	try {
 	  const book = await Book.findOneAndUpdate(
 		{ slug: req.params.slug },
-		{ description: req.body.description || "" },
+		{ serviceDetail: serviceDetail || "" },
 		{ new: true }
 	  );
 	  if (!book) return res.status(404).json({ message: "책을 찾을 수 없습니다." });
   
-	  res.json({ message: "설명이 저장되었습니다." });
+	  res.json({ message: "서비스 설명 저장 완료", book });
 	} catch (err) {
-	  console.error("설명 저장 오류:", err);
-	  res.status(500).json({ message: "설명 저장 중 오류 발생" });
+	  console.error("서비스 설명 저장 오류:", err);
+	  res.status(500).json({ message: "저장 중 오류 발생" });
 	}
   });
 
