@@ -9,6 +9,11 @@ const router = express.Router();
 router.post("/send", async (req, res) => {
   const { userId, slug, to } = req.body;
 
+  router.use((req, res, next) => {
+    console.log("📩 emailRoutes 요청:", req.method, req.originalUrl);
+    next();
+  });
+
   try {
     const book = await Book.findOne({ slug });
     if (!book || !book.fileName) {
